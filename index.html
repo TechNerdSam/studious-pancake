@@ -281,7 +281,7 @@
             <div id="score-p2">0</div>
         </div>
         <div class="hud-bottom">
-            <span>NÉON CINÉTIQUE // VER. 2026.7.2 [ULTRA-PERF]</span>
+            <span>NÉON CINÉTIQUE // VER. 2026.9.0 [MAGNETIC-HITBOX]</span>
             <span>ECHAP: PAUSE // SOURIS: CONTRÔLE</span>
         </div>
     </div>
@@ -1002,21 +1002,23 @@
                     if (ball) this.p1.y = THREE.MathUtils.lerp(this.p1.y, ball.y, 10 * dt);
                 } else {
                     // Player Control
-                    this.p1.y = THREE.MathUtils.lerp(this.p1.y, targetY, 0.5); // Snappy lerp
-                    // Pour ULTRA réactif (digne d'un fps), on mettrait: this.p1.y = targetY;
-                    // Mais un petit lerp de 0.5 (frame based) à 60fps est très rapide.
+                    this.p1.y = targetY; // DIRECT 1:1 MAPPING - NO LERP
                 }
 
-                // AI (P2)
+                // AI (P2) - MODE FACILE / EASY MODE
                 let aiTargetY = 0;
                 // Find closest ball moving towards P2
                 let threatBall = this.balls.filter(b => b.vx > 0).sort((a,b) => b.x - a.x)[0];
                 if (threatBall) {
-                    // Simple prediction
-                    aiTargetY = threatBall.y + (Math.random()-0.5)*2; 
+                    // Prediction with MORE error (plus d'erreurs de calcul)
+                    // L'IA vise parfois un peu à côté (jusqu'à 5 unités d'erreur)
+                    aiTargetY = threatBall.y + (Math.random() - 0.5) * 5.0; 
                 }
                 
-                const aiSpeed = 15 + (this.rallyCount * 0.5); // AI gets better with rally
+                // VITESSE RÉDUITE : L'IA est maintenant beaucoup plus lente
+                // Elle commence à 10 (très lent) et accélère à peine avec le rallye
+                const aiSpeed = 10 + (this.rallyCount * 0.2); 
+                
                 const limitP2 = (CONFIG.FIELD_HEIGHT/2 - this.p2.height/2);
                 if (this.p2.y < aiTargetY) this.p2.y += aiSpeed * dt;
                 if (this.p2.y > aiTargetY) this.p2.y -= aiSpeed * dt;
@@ -1044,13 +1046,20 @@
 
                     // Paddles
                     const checkPaddle = (paddle, dir) => {
-                        const w = CONFIG.PADDLE_WIDTH/2 + ball.radius;
-                        const h = paddle.height/2 + ball.radius;
+                        // Hitbox physique réelle
+                        const physicalW = CONFIG.PADDLE_WIDTH/2 + ball.radius;
+                        
+                        // ANTI-TUNNELING: On étend la détection X selon la vitesse
+                        const detectionW = physicalW + Math.abs(ball.vx * dt) + 0.5; 
+                        
+                        // HITBOX MAGNÉTIQUE: Tolérance verticale extrême pour les "frôlements"
+                        // On ajoute +0.8 (presque 1 unité) pour que même si ça touche le "champ de force" autour, ça compte.
+                        const h = paddle.height/2 + ball.radius + 0.85; 
                         
                         const dx = Math.abs(nextX - paddle.x);
                         const dy = Math.abs(nextY - paddle.y);
                         
-                        if (dx < w && dy < h) {
+                        if (dx < detectionW && dy < h) {
                             ball.vx *= -1;
                             
                             // Angle logic
@@ -1064,8 +1073,8 @@
                                 ball.vy *= CONFIG.ACCELERATION;
                             }
 
-                            // Push out
-                            ball.x = paddle.x + (dir * (w + 0.1));
+                            // Push out to physical boundary, not detection boundary
+                            ball.x = paddle.x + (dir * (physicalW + 0.1));
                             nextX = ball.x + ball.vx * dt; // Recalculate next frame pos roughly
 
                             this.rallyCount++;
