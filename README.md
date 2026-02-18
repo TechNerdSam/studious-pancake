@@ -1,7 +1,3 @@
-Voici une proposition de README.md ultra-optimisée, conçue pour convertir, captiver et asseoir votre autorité en tant qu'expert de l'élite technologique et marketing en 2025.
-
----
-
 # 🕹️ NÉON CINÉTIQUE // ULTIMATE 2026 🚀
 
 **L'expérience ultime du Pong, réinventée avec les codes esthétiques et techniques des triples A de 2026.** Ce n'est pas qu'un jeu ; c'est une démonstration de force technologique, de design émotionnel et d'optimisation de performance pour navigateur.
