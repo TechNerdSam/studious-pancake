@@ -66,6 +66,21 @@
         }
         .message-active { opacity: 1; transform: scale(1) skewX(0deg); filter: blur(0px); text-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
+        /* --- INPUT GUIDES --- */
+        .controls-guide {
+            position: absolute; bottom: 3vmin; width: 100%; text-align: center; 
+            opacity: 0.6; font-size: 1.5vmin; letter-spacing: 2px;
+            transition: opacity 0.3s;
+        }
+        .key-badge {
+            display: inline-block; background: rgba(255,255,255,0.1); 
+            padding: 0.2em 0.6em; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 700; color: var(--c-cyan); margin: 0 0.2em;
+        }
+        .xbox-btn {
+            color: var(--c-gold); border-color: var(--c-gold);
+        }
+
         /* --- MAIN MENU (AAA DESIGN 2026) --- */
         #main-menu {
             position: absolute; inset: 0; z-index: 20;
@@ -135,6 +150,13 @@
         }
         .menu-btn:hover .icon, .menu-btn:active .icon { opacity: 1; transform: translateX(0); }
 
+        .btn-hint {
+            font-size: 0.4em; margin-left: 1rem; color: var(--c-acid); border: 1px solid var(--c-acid);
+            padding: 2px 6px; border-radius: 4px; vertical-align: middle; opacity: 0; transform: translateX(-10px);
+            transition: all 0.3s;
+        }
+        .gamepad-active .btn-hint { opacity: 1; transform: translateX(0); }
+
         .menu-footer {
             position: absolute; bottom: 6vmin; left: 8vw;
             font-size: 1.5vmin; color: rgba(255,255,255,0.3); 
@@ -148,6 +170,7 @@
             font-size: 1.5vmin; color: rgba(255,255,255,0.6); letter-spacing: 0.2em;
         }
         .status-dot { width: 8px; height: 8px; background: var(--c-acid); border-radius: 50%; box-shadow: 0 0 10px var(--c-acid); }
+        .input-mode { font-weight: 700; color: var(--c-cyan); }
 
         /* --- POST FX OVERLAYS --- */
         .scanlines {
@@ -217,7 +240,7 @@
     <div id="main-menu" class="hidden">
         <div class="menu-status">
             <div class="status-dot"></div>
-            ONLINE
+            ONLINE // <span id="input-type" class="input-mode">MOUSE</span>
         </div>
 
         <div class="hero-title">
@@ -228,10 +251,10 @@
         
         <div class="menu-options">
             <button class="menu-btn" id="btn-play">
-                <span class="icon">▶</span> MATCH RAPIDE
+                <span class="icon">▶</span> MATCH RAPIDE <span class="btn-hint">[A]</span>
             </button>
             <button class="menu-btn" id="btn-survival">
-                <span class="icon">⚡</span> MODE SURVIE
+                <span class="icon">⚡</span> MODE SURVIE <span class="btn-hint">[X]</span>
             </button>
             <button class="menu-btn" id="btn-fullscreen">
                 <span class="icon">⛶</span> PLEIN ÉCRAN
@@ -239,9 +262,9 @@
         </div>
         
         <div class="menu-footer">
-            V 2026.9.4 [RESPONSIVE CORE]<br>
+            V 2026.9.4 [GAMEPAD READY]<br>
             SAMYN-ANTOY // STUDIO 55<br>
-            <span style="color:var(--c-cyan)">TAP OR CLICK TO START</span>
+            <span style="color:var(--c-cyan)">TAP OR PRESS [A] TO START</span>
         </div>
     </div>
 
@@ -259,7 +282,8 @@
 
         <div id="msg-box" class="message-center"></div>
 
-        <div style="position: absolute; bottom: 3vmin; width: 100%; text-align: center; opacity: 0.6; font-size: 1.5vmin; letter-spacing: 2px;">
+        <!-- DYNAMIC CONTROL GUIDE -->
+        <div id="controls-text" class="controls-guide">
             CONTROLS: MOUSE / TOUCH - [ESC]: PAUSE
         </div>
     </div>
@@ -269,8 +293,8 @@
         <h1 style="font-size: 8vmin; margin:0; text-transform:uppercase; color:white; letter-spacing: 0.2em; text-shadow: 0 0 30px var(--c-cyan);">PAUSE</h1>
         <div style="width: 100px; height: 2px; background: var(--c-magenta); margin: 2rem 0;"></div>
         <div style="display:flex; gap: 2rem; flex-direction: column; width: 100%; max-width: 300px;">
-            <button id="btn-resume" class="menu-btn" style="color: var(--c-cyan); border-left:none; padding-left:0; justify-content: center; text-align: center;">REPRENDRE</button>
-            <button id="btn-quit" class="menu-btn" style="color: var(--c-magenta); border-left:none; padding-left:0; justify-content: center; text-align: center;">QUITTER</button>
+            <button id="btn-resume" class="menu-btn" style="color: var(--c-cyan); border-left:none; padding-left:0; justify-content: center; text-align: center;">REPRENDRE <span class="btn-hint">[START]</span></button>
+            <button id="btn-quit" class="menu-btn" style="color: var(--c-magenta); border-left:none; padding-left:0; justify-content: center; text-align: center;">QUITTER <span class="btn-hint">[B]</span></button>
         </div>
     </div>
 
@@ -279,8 +303,8 @@
         <h1 id="win-title" style="font-size: 8vmin; margin:0; text-transform:uppercase; color:white;">GAME OVER</h1>
         <div style="font-size: 3vmin; margin-bottom: 2rem; letter-spacing: 0.2em; color: #888;">SCORE: <span id="final-score" style="color:white">0</span></div>
         <div style="display:flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
-            <button id="btn-retry" class="menu-btn" style="color: var(--c-cyan); border-left:none; padding-left:0; width: auto;">REJOUER</button>
-            <button id="btn-menu" class="menu-btn" style="border-left:none; padding-left:0; width: auto;">MENU</button>
+            <button id="btn-retry" class="menu-btn" style="color: var(--c-cyan); border-left:none; padding-left:0; width: auto;">REJOUER <span class="btn-hint">[A]</span></button>
+            <button id="btn-menu" class="menu-btn" style="border-left:none; padding-left:0; width: auto;">MENU <span class="btn-hint">[B]</span></button>
         </div>
     </div>
 
@@ -305,51 +329,128 @@
         };
 
         /**
-         * INPUT MANAGER - Handles Mouse & Touch uniformly
-         * Robustness: Normalizes coordinates to -1..1 range for gameplay consistency across devices
+         * INPUT MANAGER - Gère Souris, Tactile et MANETTE (Gamepad API)
          */
         class InputManager {
             constructor() {
                 this.y = 0; // Normalized -1 to 1
-                this.isInteracting = false;
+                this.usingGamepad = false;
                 this.handlers = [];
+                
+                // Gamepad State tracking (pour éviter les clics multiples)
+                this.gpState = {
+                    a: false, b: false, x: false, y: false, start: false, up: false, down: false
+                };
+                this.prevGpState = {...this.gpState};
 
-                // Bind events
+                // Mouse / Touch Bindings
                 document.addEventListener('mousemove', this.onMove.bind(this));
                 document.addEventListener('touchmove', this.onTouch.bind(this), { passive: false });
-                document.addEventListener('touchstart', () => this.isInteracting = true);
                 
-                // Click/Tap generic handler
                 const action = (e) => {
-                    this.isInteracting = true;
+                    this.usingGamepad = false;
+                    this.updateUI();
                     this.handlers.forEach(h => h(e));
                 };
                 document.addEventListener('mousedown', action);
                 document.addEventListener('touchstart', action);
+                
+                window.addEventListener("gamepadconnected", (e) => {
+                    console.log("Gamepad connected:", e.gamepad.id);
+                    this.usingGamepad = true;
+                    this.updateUI();
+                });
             }
 
             onMove(e) {
-                // Map clientY to -1 (top) to 1 (bottom) roughly
-                // We use window.innerHeight to normalize
+                if(this.usingGamepad && Math.abs(e.movementY) < 2) return; // Prevent jitter drift switch
+                this.usingGamepad = false;
                 this.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                this.isInteracting = true;
+                this.updateUI();
             }
 
             onTouch(e) {
                 if(e.touches.length > 0) {
-                    e.preventDefault(); // Prevent scroll
+                    e.preventDefault();
+                    this.usingGamepad = false;
                     const t = e.touches[0];
                     this.y = -(t.clientY / window.innerHeight) * 2 + 1;
-                    this.isInteracting = true;
+                    this.updateUI();
                 }
             }
 
             onClick(callback) {
                 this.handlers.push(callback);
             }
+            
+            updateUI() {
+                const guide = document.getElementById('controls-text');
+                const status = document.getElementById('input-type');
+                const menu = document.getElementById('main-menu');
+
+                if(this.usingGamepad) {
+                    guide.innerHTML = `CONTROLS: <span class="key-badge xbox-btn">L-STICK</span> MOVE - <span class="key-badge xbox-btn">START</span> PAUSE`;
+                    status.innerText = "GAMEPAD XBOX";
+                    status.style.color = CFG.COLORS.ELECTRIC;
+                    menu.classList.add('gamepad-active');
+                } else {
+                    guide.innerHTML = `CONTROLS: MOUSE / TOUCH - <span class="key-badge">ESC</span> PAUSE`;
+                    status.innerText = "MOUSE";
+                    status.style.color = CFG.COLORS.CYAN;
+                    menu.classList.remove('gamepad-active');
+                }
+            }
+
+            // Appelé à chaque frame pour poller le gamepad
+            pollGamepad() {
+                const gamepads = navigator.getGamepads();
+                const gp = gamepads[0]; // Prend la première manette
+
+                if (!gp) return null;
+
+                // --- AXES (Stick Gauche) ---
+                // Axis 1 est généralement Y. Valeur entre -1 et 1.
+                // Deadzone pour éviter le drift
+                let axisY = gp.axes[1];
+                if (Math.abs(axisY) < 0.15) axisY = 0;
+                
+                // D-Pad support (Souvent mappé sur buttons 12=UP, 13=DOWN)
+                if (gp.buttons[12]?.pressed) axisY = 1;
+                if (gp.buttons[13]?.pressed) axisY = -1;
+
+                if (Math.abs(axisY) > 0.0) {
+                    this.usingGamepad = true;
+                    this.y = -axisY; // Invert to match screen coord system
+                    this.updateUI();
+                }
+
+                // --- BUTTONS ---
+                // Mapping Standard Xbox : 0:A, 1:B, 2:X, 3:Y, 9:Start, 8:Select
+                const currentState = {
+                    a: gp.buttons[0]?.pressed,
+                    b: gp.buttons[1]?.pressed,
+                    x: gp.buttons[2]?.pressed,
+                    start: gp.buttons[9]?.pressed
+                };
+
+                // Logic "Just Pressed" (Edge detection)
+                const pressed = {
+                    a: currentState.a && !this.prevGpState.a,
+                    b: currentState.b && !this.prevGpState.b,
+                    x: currentState.x && !this.prevGpState.x,
+                    start: currentState.start && !this.prevGpState.start
+                };
+
+                // Si un bouton est pressé, on passe en mode gamepad
+                if(currentState.a || currentState.b || currentState.start) {
+                    if(!this.usingGamepad) { this.usingGamepad = true; this.updateUI(); }
+                }
+
+                this.prevGpState = currentState;
+                return { y: this.y, pressed: pressed };
+            }
 
             getNormalizedY() {
-                // Returns value between -1 and 1
                 return Math.max(-1, Math.min(1, this.y));
             }
         }
@@ -797,7 +898,9 @@
                 if(this.state === 'PLAYING') return;
                 
                 this.mode = mode;
-                
+                this.audio.resume(); // Ensure Audio Context on controller start
+                this.audio.playUI('click');
+
                 // UI Update
                 const scoreLim = document.getElementById('score-limit');
                 scoreLim.innerText = mode === 'SURVIVAL' ? "SURVIE" : "5 PTS VICTOIRE";
@@ -840,6 +943,35 @@
             }
 
             update(dt, t) {
+                // POLLING GAMEPAD
+                // Check button presses for Menu/Pause control
+                const gp = this.input.pollGamepad();
+                
+                if (gp && gp.pressed) {
+                    this.audio.resume(); // Ensure audio unlocks on any button press
+                    
+                    // START Button : Toggle Pause
+                    if (gp.pressed.start) {
+                        this.audio.playUI('click');
+                        if (this.state === 'PLAYING') this.togglePause();
+                        else if (this.state === 'PAUSED') this.togglePause();
+                    }
+
+                    // --- STATE SPECIFIC CONTROLS ---
+                    if (this.state === 'ATTRACT') {
+                         if (gp.pressed.a) this.transitionToGame('STANDARD');
+                         if (gp.pressed.x) this.transitionToGame('SURVIVAL');
+                    }
+                    else if (this.state === 'PAUSED') {
+                        if (gp.pressed.b) this.goToMenu();
+                        if (gp.pressed.a) this.togglePause();
+                    }
+                    else if (this.state === 'OVER') {
+                        if (gp.pressed.a) this.transitionToGame(this.mode); // Retry
+                        if (gp.pressed.b) this.goToMenu(); // Back
+                    }
+                }
+
                 // If paused, skip game logic but keep camera/rendering active
                 if (this.state === 'PAUSED') return;
 
@@ -874,7 +1006,7 @@
                     p1T = getBallY(-1) + Math.sin(t*3)*2; 
                     p2T = getBallY(1) + Math.cos(t*2)*2;
                 } else if (this.state === 'PLAYING') {
-                    p1T = inputY; // Player Control
+                    p1T = inputY; // Player Control (Mouse OR Gamepad)
                     // AI Difficulty
                     const error = this.mode === 'SURVIVAL' ? Math.sin(t*10)*1.5 : Math.sin(t*5)*3;
                     p2T = getBallY(1) + error; 
@@ -914,6 +1046,14 @@
                                 this.audio.playImpact(b.vel.length()/100, 'paddle');
                                 this.vfx.emit(b.pos.x, b.pos.y, p.color, 20);
                                 this.vfx.shake = 1.0;
+                                // Haptic Feedback (Vibration)
+                                if(navigator.vibrate) navigator.vibrate(20); 
+                                const gp = navigator.getGamepads()[0];
+                                if (gp && gp.vibrationActuator) {
+                                    gp.vibrationActuator.playEffect("dual-rumble", {
+                                        startDelay: 0, duration: 100, weakMagnitude: 1.0, strongMagnitude: 0.5
+                                    });
+                                }
                             }
                             return true;
                         }
