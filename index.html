@@ -172,7 +172,7 @@
             transition: width 0.1s; position: relative;
         }
         
-        /* Modal Styles Game Over */
+        /* Modal Styles Game Over & Pause */
         .modal {
             position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 50; 
             display: flex; align-items: center; justify-content: center; flex-direction: column;
@@ -260,7 +260,17 @@
         <div id="msg-box" class="message-center"></div>
 
         <div style="position: absolute; bottom: 3vmin; width: 100%; text-align: center; opacity: 0.6; font-size: 1.5vmin; letter-spacing: 2px;">
-            CONTROLS: MOUSE / TOUCH // TAP: BOOST
+            CONTROLS: MOUSE / TOUCH - [ESC]: PAUSE
+        </div>
+    </div>
+
+    <!-- PAUSE MENU -->
+    <div id="pause-menu" class="modal hidden">
+        <h1 style="font-size: 8vmin; margin:0; text-transform:uppercase; color:white; letter-spacing: 0.2em; text-shadow: 0 0 30px var(--c-cyan);">PAUSE</h1>
+        <div style="width: 100px; height: 2px; background: var(--c-magenta); margin: 2rem 0;"></div>
+        <div style="display:flex; gap: 2rem; flex-direction: column; width: 100%; max-width: 300px;">
+            <button id="btn-resume" class="menu-btn" style="color: var(--c-cyan); border-left:none; padding-left:0; justify-content: center; text-align: center;">REPRENDRE</button>
+            <button id="btn-quit" class="menu-btn" style="color: var(--c-magenta); border-left:none; padding-left:0; justify-content: center; text-align: center;">QUITTER</button>
         </div>
     </div>
 
@@ -614,7 +624,7 @@
         // --- GAME ENGINE CONTROLLER ---
         class Game {
             constructor() {
-                this.state = 'LOAD'; // LOAD -> ATTRACT -> PLAY -> OVER
+                this.state = 'LOAD'; // LOAD -> ATTRACT -> PLAY -> OVER -> PAUSED
                 this.mode = 'STANDARD'; 
                 this.score = {p1:0, p2:0};
                 this.targetCamZ = CFG.CAM.MENU_Z;
@@ -662,6 +672,11 @@
             setupEvents() {
                 window.addEventListener('resize', () => this.handleResize());
                 
+                // Keyboard Listeners
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.togglePause();
+                });
+
                 // UI Interaction
                 this.input.onClick((e) => {
                    this.audio.playUI('click');
@@ -684,6 +699,10 @@
                 bind('btn-fullscreen', () => this.toggleFS());
                 bind('btn-retry', () => this.transitionToGame(this.mode));
                 bind('btn-menu', () => this.goToMenu());
+                
+                // Pause Menu Buttons
+                bind('btn-resume', () => this.togglePause());
+                bind('btn-quit', () => this.goToMenu());
             }
 
             handleResize() {
@@ -718,6 +737,26 @@
                 if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
                 else document.exitFullscreen().catch(e=>{});
             }
+            
+            togglePause() {
+                // Can only pause if playing or already paused
+                if (this.state !== 'PLAYING' && this.state !== 'PAUSED') return;
+
+                if (this.state === 'PLAYING') {
+                    this.state = 'PAUSED';
+                    document.getElementById('pause-menu').classList.remove('hidden');
+                    document.getElementById('ui-layer').classList.add('hud-hidden');
+                    // Add blur for visual pause indication
+                    this.vfx.uni.blur.value = 0.5;
+                } else {
+                    this.state = 'PLAYING';
+                    document.getElementById('pause-menu').classList.add('hidden');
+                    document.getElementById('ui-layer').classList.remove('hud-hidden');
+                    this.vfx.uni.blur.value = 0;
+                    // Reset clock delta so physics don't jump
+                    this.clock.getDelta();
+                }
+            }
 
             startLoading() {
                 let p = 0;
@@ -744,6 +783,7 @@
                 document.getElementById('main-menu').classList.remove('menu-hidden');
                 document.getElementById('ui-layer').classList.add('hud-hidden');
                 document.getElementById('menu-over').classList.add('hidden');
+                document.getElementById('pause-menu').classList.add('hidden');
                 this.vfx.uni.blur.value = 0.8;
                 this.handleResize();
                 this.startRound();
@@ -764,6 +804,7 @@
 
                 document.getElementById('main-menu').classList.add('menu-hidden');
                 document.getElementById('menu-over').classList.add('hidden');
+                document.getElementById('pause-menu').classList.add('hidden');
                 
                 // Reset State
                 this.score = {p1:0, p2:0};
@@ -781,6 +822,7 @@
                     this.vfx.uni.blur.value = 0;
                     document.getElementById('ui-layer').classList.remove('hud-hidden');
                     this.startRound();
+                    this.clock.getDelta(); // Reset clock
                 }, 600);
             }
 
@@ -798,6 +840,9 @@
             }
 
             update(dt, t) {
+                // If paused, skip game logic but keep camera/rendering active
+                if (this.state === 'PAUSED') return;
+
                 // Smooth Camera Transition (Responsive)
                 this.camera.position.z += (this.targetCamZ - this.camera.position.z) * dt * 3;
 
@@ -985,6 +1030,8 @@
                 const time = this.clock.elapsedTime;
                 
                 this.update(dt, time);
+                
+                // Visuals (particles, bloom) continue running even if game is paused for aesthetic reasons
                 this.vfx.update(dt);
                 this.vfx.cmp.render();
             }
